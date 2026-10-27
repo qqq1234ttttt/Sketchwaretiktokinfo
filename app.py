@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup
 import json
 from datetime import datetime
 
-# template_folder='.' ထည့်ထားတာကြောင့် Folder ဆောက်စရာမလိုတော့ပါဘူး
 app = Flask(__name__, template_folder='.')
 
 def format_number(value):
@@ -21,15 +20,28 @@ def format_number(value):
 
 def get_tiktok_data(username):
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-        "Accept-Language": "en-US,en;q=0.9"
+        "Host": "www.tiktok.com",
+        "sec-ch-ua": "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"99\", \"Google Chrome\";v=\"99\"",
+        "sec-ch-ua-mobile": "?1",
+        "sec-ch-ua-platform": "\"Android\"",
+        "upgrade-insecure-requests": "1",
+        "user-agent": "Mozilla/5.0 (Linux; Android 8.0.0; Plume L2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.88 Mobile Safari/537.36",
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
+        "sec-fetch-site": "none",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-user": "?1",
+        "sec-fetch-dest": "document",
+        "accept-language": "en-US,en;q=0.9"
     }
+    
     try:
         response = requests.get(f'https://www.tiktok.com/@{username}', headers=headers)
+        
         if response.status_code != 200:
-            return None, "Data ဆွဲထုတ်၍ မရပါ။ (Username မှန်မမှန် စစ်ပါ)"
+            return None, f"Failed to retrieve data (Status: {response.status_code})"
         
         soup = BeautifulSoup(response.text, 'html.parser')
+        
         user_data_script = None
         for script in soup.find_all('script'):
             if 'userInfo' in script.text:
@@ -37,30 +49,50 @@ def get_tiktok_data(username):
                 break
         
         if not user_data_script:
-            return None, "User ဒေတာ ရှာမတွေ့ပါ။"
+            return None, "No user data found in the script."
         
         user_data_json = json.loads(user_data_script)
         user_info = user_data_json.get('__DEFAULT_SCOPE__', {}).get('webapp.user-detail', {}).get('userInfo', {})
         user = user_info.get('user', {})
         
+        nickname = user.get('nickname', 'N/A')
+        bio = user.get('signature', 'N/A')
+        
+        # Region အမှန်ပေါ်အောင် စစ်ဆေးခြင်း (User data ထဲမှာ မပါရင် Region JSON တခြားနေရာကိုပါ ရှာပေးပါမည်)
+        region = user.get('region', '')
+        if not region or region == 'N/A':
+            region = user_data_json.get('__DEFAULT_SCOPE__', {}).get('webapp.user-detail', {}).get('seoProps', {}).get('seoData', {}).get('region', 'N/A')
+        if not region or region == 'N/A':
+            region = 'GLOBAL / N/A'
+
+        user_id = user.get('id', 'N/A')
+        
         create_time_unix = user.get('createTime', 0)
-        create_time = datetime.utcfromtimestamp(create_time_unix).strftime('%Y-%m-%d') if create_time_unix else 'N/A'
+        create_time = datetime.utcfromtimestamp(create_time_unix).strftime('%Y-%m-%d %H:%M:%S') if create_time_unix else 'N/A'
         
         stats = user_info.get('stats', {})
+        followers = format_number(stats.get('followerCount', 0))
+        following = format_number(stats.get('followingCount', 0))
+        likes = format_number(stats.get('heartCount', 0))
+        videos = format_number(stats.get('videoCount', 0))
         
         return {
             "username": username,
-            "nickname": user.get('nickname', 'N/A'),
-            "bio": user.get('signature', 'N/A'),
-            "region": user.get('region', 'N/A'),
+            "nickname": nickname,
+            "bio": bio,
+            "user_id": user_id,
+            "region": region,
             "create_time": create_time,
-            "followers": format_number(stats.get('followerCount', 0)),
-            "following": format_number(stats.get('followingCount', 0)),
-            "likes": format_number(stats.get('heartCount', 0)),
-            "videos": format_number(stats.get('videoCount', 0))
+            "followers": followers,
+            "following": following,
+            "likes": likes,
+            "videos": videos
         }, None
+        
+    except json.JSONDecodeError as e:
+        return None, f"JSON decoding error: {e}"
     except Exception as e:
-        return None, f"Error: {str(e)}"
+        return None, f"Error: {e}"
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
