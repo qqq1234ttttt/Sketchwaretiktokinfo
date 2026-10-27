@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>[SYSTEM_OVERRIDE] TikTok Scraper</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Fira Code', monospace;
+        }
+
+        body {
+            background-color: #0d0d0d;
+            color: #00ff66;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+            overflow-x: hidden;
+        }
+
+        /* Scanline Effect */
+        body::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .terminal-container {
+            width: 100%;
+            max-width: 480px;
+            background: #050505;
+            border: 1px solid #00ff66;
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.3);
+            border-radius: 5px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #00ff66;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .dots {
+            display: flex;
+            gap: 6px;
+            margin-right: 15px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .dot-1 { background-color: #ff5f56; }
+        .dot-2 { background-color: #ffbd2e; }
+        .dot-3 { background-color: #27c93f; }
+
+        .title {
+            font-size: 13px;
+            color: #00ff66;
+            letter-spacing: 1px;
+            text-shadow: 0 0 5px #00ff66;
+        }
+
+        .prompt-text {
+            font-size: 14px;
+            margin-bottom: 15px;
+            color: #00cc52;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            background: #000;
+            border: 1px solid #008837;
+            border-radius: 3px;
+            padding: 8px 12px;
+        }
+
+        .input-group:focus-within {
+            border-color: #00ff66;
+            box-shadow: 0 0 8px rgba(0, 255, 102, 0.4);
+        }
+
+        .prefix {
+            color: #00ff66;
+            margin-right: 8px;
+            font-weight: bold;
+        }
+
+        input {
+            background: transparent;
+            border: none;
+            color: #00ff66;
+            font-size: 14px;
+            width: 100%;
+            outline: none;
+        }
+
+        input::placeholder {
+            color: #005522;
+        }
+
+        button {
+            background: #002b11;
+            color: #00ff66;
+            border: 1px solid #00ff66;
+            padding: 12px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:active, button:hover {
+            background: #00ff66;
+            color: #000;
+            box-shadow: 0 0 12px #00ff66;
+        }
+
+        .result-box {
+            margin-top: 20px;
+            background: #000;
+            border: 1px dashed #00ff66;
+            padding: 15px;
+            border-radius: 3px;
+            font-size: 13px;
+            line-height: 1.8;
+            word-break: break-all;
+        }
+
+        .result-box p {
+            color: #00e65c;
+        }
+
+        .result-box strong {
+            color: #ffffff;
+            text-shadow: 0 0 2px #fff;
+        }
+
+        .error-msg {
+            margin-top: 15px;
+            color: #ff3333;
+            border: 1px solid #ff3333;
+            background: rgba(255, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            text-shadow: 0 0 5px #ff3333;
+        }
+
+        .footer-status {
+            margin-top: 15px;
+            font-size: 11px;
+            color: #005522;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="terminal-container">
+        <div class="terminal-header">
+            <div class="dots">
+                <div class="dot dot-1"></div>
+                <div class="dot dot-2"></div>
+                <div class="dot dot-3"></div>
+            </div>
+            <div class="title">root@system:~# tiktok_fetcher.py</div>
+        </div>
+
+        <div class="prompt-text">[+] Target Acquisition Protocol Initialized...</div>
+
+        <form method="POST">
+            <div class="input-group">
+                <span class="prefix">@</span>
+                <input type="text" name="username" placeholder="enter_username..." required autocomplete="off">
+            </div>
+            <button type="submit">> EXECUTE_SCRAPE</button>
+        </form>
+
+        {% if data %}
+            <div class="result-box">
+                <p>================================</p>
+                <p>[+] <strong>USERNAME:</strong> @{{ data.username }}</p>
+                <p>[+] <strong>NAME:</strong> {{ data.nickname }}</p>
+                <p>[+] <strong>BIO:</strong> {{ data.bio }}</p>
+
+                <p>================================</p>
+                <p>[+] <strong>REGION:</strong> {{ data.region }}</p>
+                <p>[+] <strong>ACCOUNT CREATED:</strong> {{ data.create_time }}</p>
+                <p>[+] <strong>FOLLOWERS:</strong> {{ data.followers }}</p>
+                <p>[+] <strong>FOLLOWING:</strong> {{ data.following }}</p>
+                <p>[+] <strong>LIKES:</strong> {{ data.likes }}</p>
+                <p>[+] <strong>VIDEOS:</strong> {{ data.videos }}</p>
+                <p>================================</p>
+            </div>
+        {% elif error %}
+            <div class="error-msg">
+                [!] ERROR: {{ error }}
+            </div>
+        {% endif %}
+
+        <div class="footer-status">STATUS: ONLINE | PORT: 5000</div>
+    </div>
+
+</body>
+</html>
