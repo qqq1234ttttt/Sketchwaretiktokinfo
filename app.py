@@ -7,6 +7,24 @@ from datetime import datetime
 
 app = Flask(__name__, template_folder='.')
 
+# နိုင်ငံကုဒ်များကို အမည်အပြည့်အစုံသို့ ပြောင်းပေးမည့် ဇယား
+COUNTRY_MAP = {
+    "MM": "Myanmar (Burma)",
+    "US": "United States",
+    "TH": "Thailand",
+    "SG": "Singapore",
+    "MY": "Malaysia",
+    "ID": "Indonesia",
+    "VN": "Vietnam",
+    "PH": "Philippines",
+    "CN": "China",
+    "JP": "Japan",
+    "KR": "South Korea",
+    "GB": "United Kingdom",
+    "IN": "India",
+    "TW": "Taiwan"
+}
+
 def format_number(value):
     try:
         value = float(value)
@@ -57,16 +75,22 @@ def get_tiktok_data(username):
         
         nickname = user.get('nickname', 'N/A')
         bio = user.get('signature', 'N/A')
-        
-        # Region အမှန်ပေါ်အောင် စစ်ဆေးခြင်း (User data ထဲမှာ မပါရင် Region JSON တခြားနေရာကိုပါ ရှာပေးပါမည်)
-        region = user.get('region', '')
-        if not region or region == 'N/A':
-            region = user_data_json.get('__DEFAULT_SCOPE__', {}).get('webapp.user-detail', {}).get('seoProps', {}).get('seoData', {}).get('region', 'N/A')
-        if not region or region == 'N/A':
-            region = 'GLOBAL / N/A'
-
         user_id = user.get('id', 'N/A')
         
+        # Region ကို ရယူပြီး Country Code ကို အမည်အပြည့်အစုံသို့ ပြောင်းလဲခြင်း
+        raw_region = user.get('region', '').strip().upper()
+        if not raw_region or len(raw_region) > 3:
+            # SEO data သို့မဟုတ် အခြားနေရာမှ ထပ်မံရှာဖွေရန်
+            raw_region = user_data_json.get('__DEFAULT_SCOPE__', {}).get('webapp.user-detail', {}).get('seoProps', {}).get('seoData', {}).get('region', '').strip().upper()
+        
+        # ဇယားထဲမှာ ရှိရင် အမည်အပြည့်အစုံထုတ်ပေးမည်၊ မရှိရင် Original Code ကိုပဲ ပြမည်
+        if raw_region in COUNTRY_MAP:
+            region = COUNTRY_MAP[raw_region]
+        elif raw_region:
+            region = raw_region
+        else:
+            region = "GLOBAL / UNKNOWN"
+
         create_time_unix = user.get('createTime', 0)
         create_time = datetime.utcfromtimestamp(create_time_unix).strftime('%Y-%m-%d %H:%M:%S') if create_time_unix else 'N/A'
         
